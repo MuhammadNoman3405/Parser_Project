@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "cc_parser_backend/API_Connect_point.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "cc_parser_frontend/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "cc_parser_backend/API_Connect_point.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "cc_parser_frontend/$1"
+    }
+  ]
+}
