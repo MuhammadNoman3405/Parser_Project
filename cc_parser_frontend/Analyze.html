@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>W++ Token Analyzer | CS-310 Compiler Construction</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080b14;
+      --s1: #0d1120;
+      --s2: #111828;
+      --card: #151d2e;
+      --border: #1e2a42;
+      --border2: #263450;
+      --text: #cdd6f4;
+      --muted: #6c7a96;
+      --accent: #89b4fa;
+      --green: #a6e3a1;
+      --yellow: #f9e2af;
+      --red: #f38ba8;
+      --mauve: #cba6f7;
+      --peach: #fab387;
+      --sky: #89dceb;
+      --teal: #94e2d5;
+      --overlay: rgba(137, 180, 250, 0.06);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(137, 180, 250, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(137, 180, 250, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8, 11, 20, 0.9);
+      backdrop-filter: blur(12px);
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #89b4fa, #cba6f7);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(137, 180, 250, 0.3);
+    }
+
+    .logo-text h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-text p {
+      font-size: .72rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 1px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .panel-header {
+      padding: 20px 24px;
+      background: var(--s1);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .file-zone {
+      margin: 24px;
+      padding: 40px;
+      border: 2px dashed var(--border2);
+      border-radius: 16px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--overlay);
+      transition: all .3s ease;
+    }
+
+    .file-zone:hover {
+      border-color: var(--accent);
+      background: rgba(137, 180, 250, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .file-zone i {
+      font-size: 48px;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .file-zone input {
+      display: none;
+    }
+
+    .file-zone h3 {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .file-zone p {
+      font-size: .9rem;
+      color: var(--muted);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 0 24px 24px;
+      color: var(--muted);
+      font-size: .75rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .divider:not(:empty)::before {
+      margin-right: 1.5em;
+    }
+
+    .divider:not(:empty)::after {
+      margin-left: 1.5em;
+    }
+
+    .editor-wrap {
+      padding: 0 24px 24px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 300px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .9rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color .3s;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .action-bar {
+      padding: 16px 24px;
+      background: var(--s1);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      transition: all .2s;
+      border: none;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border2);
+    }
+
+    .btn-ghost:hover {
+      background: var(--overlay);
+      color: var(--text);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #89b4fa, #cba6f7);
+      color: #080b14;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(137, 180, 250, 0.4);
+    }
+
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 11, 20, 0.9);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-text {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      letter-spacing: .1em;
+    }
+
+    /* Token category colors */
+    :root {
+      --kw: #cba6f7;
+      /* Keywords */
+      --id: #89dceb;
+      /* Identifiers */
+      --con: #fab387;
+      /* Constants (Numbers) */
+      --lit: #f9e2af;
+      /* Literals (Strings/Chars) */
+      --op: #89b4fa;
+      /* Operators */
+      --pun: #a6e3a1;
+      /* Punctuators */
+    }
+
+    /* ═══════════ CUSTOM CODE EDITOR ═══════════ */
+    .editor-container {
+      display: flex;
+      position: relative;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      height: 350px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .9rem;
+      line-height: 1.6;
+      overflow: hidden;
+    }
+
+    .line-numbers {
+      width: 50px;
+      padding: 20px 0;
+      background: var(--s1);
+      border-right: 1px solid var(--border);
+      color: var(--muted);
+      text-align: right;
+      padding-right: 12px;
+      user-select: none;
+      overflow-y: hidden;
+    }
+
+    .line-numbers div {
+      height: 1.6em;
+    }
+
+    .line-numbers .error-line-number {
+      color: var(--red);
+      font-weight: 700;
+      background: rgba(243, 139, 168, 0.15);
+      border-left: 3px solid var(--red);
+      padding-right: 9px;
+    }
+
+    .editor-textarea-wrap {
+      position: relative;
+      flex: 1;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .editor-backdrop,
+    textarea#codeEditor {
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      padding: 20px;
+      border: none;
+      background: transparent;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .9rem;
+      line-height: 1.6;
+      white-space: pre;
+      overflow: auto;
+      width: 100%;
+      height: 100%;
+      resize: none;
+    }
+
+    textarea#codeEditor {
+      color: transparent; /* make textarea text transparent */
+      caret-color: var(--accent);
+      z-index: 2;
+      outline: none;
+    }
+    
+    textarea#codeEditor::selection {
+      background: rgba(137, 180, 250, 0.3);
+      color: var(--text);
+    }
+
+    .editor-backdrop {
+      color: var(--text); /* make backdrop text visible */
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    #editorBackdrop b {
+      font-weight: 900 !important;
+      color: var(--kw);
+    }
+
+    .editor-backdrop div {
+      height: 1.6em;
+      white-space: pre;
+    }
+
+    .error-highlight-line {
+      background: rgba(243, 139, 168, 0.12);
+      width: 100%;
+      border-radius: 2px;
+      border-left: 3px solid var(--red);
+      margin-left: -3px;
+    }
+
+    /* ═══════════ RESULTS DASHBOARD GRID ═══════════ */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 24px;
+    }
+
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    .section-header {
+      padding: 20px 24px;
+      background: var(--s1);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-title {
+      font-size: .8rem;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .15em;
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .section-title.warning::before {
+      background: var(--red);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .refresh-link {
+      font-size: .7rem;
+      color: var(--accent);
+      text-decoration: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background .2s;
+    }
+
+    .refresh-link:hover {
+      background: rgba(137, 180, 250, 0.1);
+    }
+
+    .section-body {
+      padding: 24px;
+      flex: 1;
+    }
+
+    /* ═══════════ TABLES ═══════════ */
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .8rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.02);
+      text-align: left;
+      padding: 12px 16px;
+      color: var(--muted);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .pill {
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: .7rem;
+      font-weight: 700;
+    }
+
+    .stat-val {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .stat-lbl {
+      font-size: .7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 18px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      text-align: center;
+    }
+
+    .metric-big {
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .metric-label {
+      font-size: .72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .metric-sub {
+      margin-top: 8px;
+      font-size: .8rem;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      opacity: 0.9;
+    }
+
+    .bar-table {
+      width: 100%;
+      display: grid;
+      gap: 12px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 150px 70px 1fr 80px;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bar-track {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+    }
+
+    .bar-perc {
+      text-align: right;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .8rem;
+      color: var(--muted);
+    }
+
+    .bar-total {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .9rem;
+      color: #fff;
+      text-align: center;
+    }
+
+    .bar-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .bar-badge {
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: .75rem;
+      letter-spacing: .02em;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .line-dist {
+      width: 100%;
+      display: grid;
+      gap: 10px;
+    }
+
+    .line-row {
+      display: grid;
+      grid-template-columns: 90px 70px 1fr 50px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .stat-item {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .stream-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .token-chip {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: .75rem;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .warning-message {
+      background: rgba(243, 139, 168, 0.1);
+      border: 1px solid rgba(243, 139, 168, 0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      color: var(--red);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* AST Syntax Highlighting & Container */
+    .json-key {
+      color: var(--mauve);
+      font-weight: 500;
+    }
+
+    .json-string {
+      color: var(--green);
+    }
+
+    .json-number {
+      color: var(--con);
+    }
+
+    .json-boolean {
+      color: var(--peach);
+    }
+
+    .json-null {
+      color: var(--red);
+    }
+
+    .ast-container {
+      max-height: 500px;
+      overflow-y: auto;
+      background: #05080f;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-all;
+      position: relative;
+    }
+
+    .ast-container pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .ast-container code {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
+    }
+
+    .ast-copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--border2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+
+    .ast-copy-btn:hover {
+      background: var(--accent);
+      color: #080b14;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <a href="index.html" class="logo-area">
+      <div class="logo-icon">⚙</div>
+      <div class="logo-text">
+        <h1>W++ Token Analyzer</h1>
+        <p>Compiler Construction · CS-310</p>
+      </div>
+    </a>
+  </header>
+
+  <div class="container">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Source Input</span>
+        <button class="btn btn-ghost" onclick="loadSample()">Load Sample</button>
+      </div>
+
+      <div class="file-zone" onclick="document.getElementById('fInput').click()">
+        <input type="file" id="fInput" accept=".wpp,.txt" onchange="handleFileUpload(event)">
+        <i>📂</i>
+        <h3>Upload W++ File</h3>
+        <p>Drag and drop or click to browse (.wpp, .txt)</p>
+      </div>
+
+      <div class="divider">OR TYPE CODE MANUALLY</div>
+
+      <div class="editor-wrap">
+        <div class="editor-container">
+          <div class="line-numbers" id="lineNumbers">
+            <div>1</div>
+          </div>
+          <div class="editor-textarea-wrap">
+            <div class="editor-backdrop" id="editorBackdrop"></div>
+            <textarea id="codeEditor" wrap="off" spellcheck="false" placeholder="// Paste your W++ code here..."
+              oninput="syncEditor()" onscroll="syncScroll()"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn btn-ghost" onclick="clearEditor()">Clear</button>
+        <button class="btn btn-primary" onclick="analyze()">Analyze & Generate Report →</button>
+      </div>
+    </div>
+
+    <!-- Results Dashboard (initially hidden) -->
+    <div id="resultsDashboard" style="display: none; margin-top: 40px; width: 100%;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2
+          style="font-size: 1.5rem; font-weight: 700; color: #fff; background: linear-gradient(135deg, #89b4fa, #cba6f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+          Analysis Results</h2>
+        <button class="btn btn-outline" onclick="window.print()">Print PDF</button>
+      </div>
+      <div class="results-grid" id="resultsGrid">
+        <!-- Cards will be injected here -->
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-overlay" id="loader">
+    <div class="spinner"></div>
+    <div class="loading-text">TOKENIZING SOURCE...</div>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'https://cc-parser-backend-aj6z.onrender.com';
+    //const API_BASE_URL = 'http://127.0.0.1:8000';
+
+    const errorLines = new Set();
+
+    // ── EDITOR SYNC AND SCROLL SYNC ──────────────────────────────────────────
+    function syncScroll() {
+      const textarea = document.getElementById('codeEditor');
+      const backdrop = document.getElementById('editorBackdrop');
+      const lineNumbers = document.getElementById('lineNumbers');
+
+      backdrop.scrollTop = textarea.scrollTop;
+      backdrop.scrollLeft = textarea.scrollLeft;
+      lineNumbers.scrollTop = textarea.scrollTop;
+    }
+
+    function syncEditor() {
+      const textarea = document.getElementById('codeEditor');
+      const backdrop = document.getElementById('editorBackdrop');
+
+      backdrop.innerHTML = highlightCodeLines(textarea.value);
+
+      syncScroll();
+      updateLineNumbers();
+    }
+
+    function updateLineNumbers() {
+      const textarea = document.getElementById('codeEditor');
+      const lineNumbers = document.getElementById('lineNumbers');
+      const lines = textarea.value.split('\n');
+      let numHtml = '';
+      for (let i = 1; i <= lines.length; i++) {
+        if (errorLines.has(i)) {
+          numHtml += `<div class="error-line-number">${i}</div>`;
+        } else {
+          numHtml += `<div>${i}</div>`;
+        }
+      }
+      lineNumbers.innerHTML = numHtml;
+    }
+
+    const WPP_KEYWORDS = ["int", "float", "double", "char", "string", "bool", "void", "long", "if", "else", "while", "for", "do", "return", "print", "read", "true", "false", "main"];
+    const KW_REGEX = new RegExp(`\\b(${WPP_KEYWORDS.join('|')})\\b`, 'g');
+    
+    function highlightCodeLines(text) {
+      const lines = text.split('\n');
+      return lines.map((line, idx) => {
+        const lineNum = idx + 1;
+        let escaped = escapeHtml(line) || '&nbsp;';
+        
+        if (escaped !== '&nbsp;') {
+          escaped = escaped.replace(KW_REGEX, '<b>$1</b>');
+        }
+
+        if (errorLines.has(lineNum)) {
+          return `<div class="error-highlight-line">${escaped}</div>`;
+        }
+        return `<div>${escaped}</div>`;
+      }).join('');
+    }
+    /*
+    function updateErrorHighlighting(errors) {
+      errorLines.clear();
+      (errors || []).forEach(err => {
+        if (typeof err.line === 'number') {
+          errorLines.add(err.line);
+        }
+      });
+      syncEditor();
+    }
+    */
+   function updateErrorHighlighting(errors) {
+  errorLines.clear();
+  const sourceCode = document.getElementById('codeEditor').value;
+  const totalLines = sourceCode.split('\n').length;   // ← get last line number
+
+  (errors || []).forEach(err => {
+    if (typeof err.line === 'number') {
+      errorLines.add(err.line);
+    } else if (err.line === 'EOF') {
+      errorLines.add(totalLines);          // ← highlight the last line
+    }
+  });
+  syncEditor();
+}
+
+    function clearEditor() {
+      const editor = document.getElementById('codeEditor');
+      editor.value = '';
+      errorLines.clear();
+      syncEditor();
+      document.getElementById('resultsDashboard').style.display = 'none';
+    }
+
+    // Initialize on DOM Load
+    document.addEventListener('DOMContentLoaded', () => {
+      syncEditor();
+    });
+
+    // ── ANALYZE SOURCE CODE (MAIN CALL) ──────────────────────────────────────
+    async function analyze(filename = 'snippet.wpp') {
+      const code = document.getElementById('codeEditor').value;
+      if (!code.trim()) {
+        alert('Please enter or upload code first.');
+        return;
+      }
+
+      showLoader(true);
+
+      try {
+        localStorage.setItem('sourceCode', code);
+        localStorage.setItem('sourceFilename', filename);
+
+        const response = await fetch(`${API_BASE_URL}/analyze/code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: code, filename: filename })
+        });
+
+        if (!response.ok) {
+          let msg = `Backend analysis failed (${response.status})`;
+          try {
+            const err = await response.json();
+            if (err?.detail) {
+              msg = typeof err.detail === 'string' ? err.detail : msg;
+            }
+          } catch { }
+          throw new Error(msg);
+        }
+
+        const data = await response.json();
+        console.log(data);
+
+        // Save to global variables
+        window.currentAnalysisResult = data;
+        localStorage.setItem('analysisResult', JSON.stringify(data));
+
+        // Update red line highlights for parser errors
+        updateErrorHighlighting(data.parser?.ast?.errors || []);
+
+        // Render results in-place on the same page
+        renderReport(data);
+
+        // Show Results Dashboard and scroll to it smoothly
+        const dashboard = document.getElementById('resultsDashboard');
+        dashboard.style.display = 'block';
+        showLoader(false);
+
+        setTimeout(() => {
+          dashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+
+      } catch (error) {
+        alert('Error: ' + error.message);
+        showLoader(false);
+      }
+    }
+
+    async function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const content = ev.target.result;
+        document.getElementById('codeEditor').value = content;
+        syncEditor();
+        await analyze(file.name);
+      };
+      reader.readAsText(file);
+    }
+
+    function showLoader(show) {
+      document.getElementById('loader').style.display = show ? 'flex' : 'none';
+    }
+
+    function loadSample() {
+      document.getElementById('codeEditor').value = `// Sample W++ Code
+int main() {
+    int x = 10;
+    if (x > 5) {
+        print "Hello W++ World";
+    }
+    return 0;
+}`;
+      syncEditor();
+    }
+
+    // ── GRANULAR SECTION-LEVEL REFRESH ───────────────────────────────────────
+    async function handleSingleSectionRefresh(title, event) {
+      const code = document.getElementById('codeEditor').value;
+      if (!code.trim()) {
+        alert('Code is empty.');
+        return;
+      }
+
+      const card = document.querySelector(`[data-section-title="${title}"]`);
+      if (!card) return;
+
+      const body = card.querySelector('.section-body');
+      const originalHtml = body.innerHTML;
+
+      body.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 100px; gap: 12px; font-family: 'JetBrains Mono', monospace; color: var(--accent);">
+      <div class="spinner" style="width: 24px; height: 24px; border-width: 2px; margin-bottom: 0;"></div>
+      <span>Refreshing...</span>
+    </div>
+  `;
+
+      try {
+        const filename = localStorage.getItem('sourceFilename') || 'snippet.wpp';
+        const response = await fetch(`${API_BASE_URL}/analyze/code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: code, filename: filename })
+        });
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+        const data = await response.json();
+
+        // Normalize data
+        if (!data.punctuators && data.separators) data.punctuators = data.separators;
+        if (!data.constants && data.literals) {
+          data.constants = {
+            integers: data.literals.integers || { counts: {}, tokens: {} },
+            floats: data.literals.floats || { counts: {}, tokens: {} }
+          };
+        }
+
+        // Save globally
+        window.currentAnalysisResult = data;
+        localStorage.setItem('analysisResult', JSON.stringify(data));
+        localStorage.setItem('sourceCode', code);
+
+        // Update error lines in the editor
+        updateErrorHighlighting(data.parser?.ast?.errors || []);
+
+        // Rerender ONLY this card
+        body.innerHTML = getSectionContent(title, data);
+      } catch (err) {
+        alert('Failed to refresh section: ' + err.message);
+        body.innerHTML = originalHtml;
+      }
+    }
+
+    function getSectionContent(title, data) {
+      switch (title) {
+        case 'Snapshot':
+          return createSnapshot(data);
+        case 'Category Distribution':
+          return createCategoryBars(data);
+        case 'Tokens per Line':
+          return createLineDistribution(data);
+        case 'Category Breakdown':
+          return createCategoryTable(data);
+        case 'Keywords Detected':
+          return createTable(data.keywords, 'Keyword', 'kw');
+        case 'Identifiers':
+          return createTable(data.identifiers, 'Identifier', 'id');
+        case 'Operators':
+          return createTable(data.operators, 'Operator', 'op');
+        case 'Separators':
+          return createTable(data.punctuators, 'Separator', 'pun');
+        case 'Constants (Numeric)':
+          {
+            const constData = {
+              counts: { ...(data.constants?.integers?.counts || {}), ...(data.constants?.floats?.counts || {}) },
+              tokens: { ...(data.constants?.integers?.tokens || {}), ...(data.constants?.floats?.tokens || {}) }
+            };
+            return createTable(constData, 'Constant', 'con');
+          }
+        case 'Literals (Textual)':
+          {
+            const litData = {
+              counts: { ...(data.literals?.strings?.counts || {}), ...(data.literals?.chars?.counts || {}) },
+              tokens: { ...(data.literals?.strings?.tokens || {}), ...(data.literals?.chars?.tokens || {}) }
+            };
+            return createTable(litData, 'Literal', 'lit');
+          }
+        case '⚠ Unrecognized Tokens':
+          {
+            const counts = data.unrecognized?.counts || {};
+            const hasAny = Object.keys(counts).length > 0;
+            return hasAny
+              ? `
+            <div class="warning-message">
+              ⚠ These tokens/characters do not match any known keywords, operators, separators, literals, constants, or valid identifier patterns in W++
+            </div>
+            ${createTable(data.unrecognized, 'Token', 'red')}
+          `
+              : `
+            <div class="mono" style="color:var(--muted); background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:16px;">
+              No unrecognized tokens were returned by the backend.
+            </div>
+          `;
+          }
+        case 'Parser: Syntax Analysis':
+          return createParserErrorsCard(data.parser?.ast || {});
+        case 'Parser: Symbol Table':
+          return createSymbolTableCard(data.parser?.symbol_table || []);
+        case 'Parser: Abstract Syntax Tree (AST)':
+          return createAstCard(data.parser?.ast || {});
+        case 'Token Stream':
+          {
+            const tokens = data.allTokens && data.allTokens.length > 0 ? data.allTokens : generateFallbackStream(data);
+            return createTokenStream(tokens);
+          }
+        default:
+          return '';
+      }
+    }
+
+    // ── PORTED DASHBOARD RENDERING ENGINE ────────────────────────────────────
+    function renderReport(data) {
+      try {
+        const grid = document.getElementById('resultsGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        // Normalize data structure
+        if (!data.punctuators && data.separators) {
+          data.punctuators = data.separators;
+        }
+        if (!data.constants && data.literals) {
+          data.constants = {
+            integers: data.literals.integers || { counts: {}, tokens: {} },
+            floats: data.literals.floats || { counts: {}, tokens: {} }
+          };
+        }
+
+        grid.appendChild(createSection('Snapshot', createSnapshot(data), true));
+        grid.appendChild(createSection('Category Distribution', createCategoryBars(data), true));
+        grid.appendChild(createSection('Tokens per Line', createLineDistribution(data), true));
+        grid.appendChild(createSection('Category Breakdown', createCategoryTable(data)));
+
+        if (data.keywords && data.keywords.counts && Object.keys(data.keywords.counts).length > 0) {
+          grid.appendChild(createSection('Keywords Detected', createTable(data.keywords, 'Keyword', 'kw')));
+        }
+
+        if (data.identifiers && data.identifiers.counts && Object.keys(data.identifiers.counts).length > 0) {
+          grid.appendChild(createSection('Identifiers', createTable(data.identifiers, 'Identifier', 'id')));
+        }
+
+        if (data.operators && data.operators.counts && Object.keys(data.operators.counts).length > 0) {
+          grid.appendChild(createSection('Operators', createTable(data.operators, 'Operator', 'op')));
+        }
+
+        if (data.punctuators && data.punctuators.counts && Object.keys(data.punctuators.counts).length > 0) {
+          grid.appendChild(createSection('Separators', createTable(data.punctuators, 'Separator', 'pun')));
+        }
+
+        if (data.constants) {
+          const constData = {
+            counts: { ...(data.constants?.integers?.counts || {}), ...(data.constants?.floats?.counts || {}) },
+            tokens: { ...(data.constants?.integers?.tokens || {}), ...(data.constants?.floats?.tokens || {}) }
+          };
+          if (Object.keys(constData.counts).length > 0) {
+            grid.appendChild(createSection('Constants (Numeric)', createTable(constData, 'Constant', 'con')));
+          }
+        }
+
+        if (data.literals) {
+          const litData = {
+            counts: { ...(data.literals?.strings?.counts || {}), ...(data.literals?.chars?.counts || {}) },
+            tokens: { ...(data.literals?.strings?.tokens || {}), ...(data.literals?.chars?.tokens || {}) }
+          };
+          if (Object.keys(litData.counts).length > 0) {
+            grid.appendChild(createSection('Literals (Textual)', createTable(litData, 'Literal', 'lit')));
+          }
+        }
+
+        // Unrecognized Tokens
+        {
+          const counts = data.unrecognized?.counts || {};
+          const hasAny = Object.keys(counts).length > 0;
+          const unrecognizedContent = hasAny
+            ? `
+          <div class="warning-message">
+            ⚠ These tokens/characters do not match any known keywords, operators, separators, literals, constants, or valid identifier patterns in W++
+          </div>
+          ${createTable(data.unrecognized, 'Token', 'red')}
+        `
+            : `
+          <div class="mono" style="color:var(--muted); background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:16px;">
+            No unrecognized tokens were returned by the backend.
+          </div>
+        `;
+          grid.appendChild(createSection('⚠ Unrecognized Tokens', unrecognizedContent, false, hasAny));
+        }
+
+        // Parser Cards
+        if (data.parser) {
+          const parserAst = data.parser.ast || {};
+          const symbolTable = data.parser.symbol_table || [];
+          grid.appendChild(createSection('Parser: Syntax Analysis', createParserErrorsCard(parserAst), true));
+          grid.appendChild(createSection('Parser: Symbol Table', createSymbolTableCard(symbolTable), true));
+          grid.appendChild(createSection('Parser: Abstract Syntax Tree (AST)', createAstCard(parserAst), true));
+        }
+
+        // Token Stream
+        if (data.allTokens && data.allTokens.length > 0) {
+          grid.appendChild(createSection('Token Stream', createTokenStream(data.allTokens), true));
+        } else {
+          const stream = generateFallbackStream(data);
+          grid.appendChild(createSection('Token Stream', createTokenStream(stream), true));
+        }
+      } catch (e) {
+        console.error('Error in renderReport:', e);
+        throw e;
+      }
+    }
+
+    function generateFallbackStream(data) {
+      const stream = [];
+      const add = (dict, cat, col) => {
+        if (!dict || !dict.tokens) return;
+        for (const [name, lines] of Object.entries(dict.tokens)) {
+          lines.forEach(l => stream.push({ value: name, category: cat, line: l, color: col }));
+        }
+      };
+      add(data.keywords, 'KEYWORD', 'kw');
+      add(data.identifiers, 'IDENTIFIER', 'id');
+      add(data.operators, 'OPERATOR', 'op');
+      add(data.punctuators, 'PUNCTUATOR', 'pun');
+      if (data.constants) {
+        add(data.constants.integers, 'CONSTANT', 'con');
+        add(data.constants.floats, 'CONSTANT', 'con');
+      }
+      if (data.literals) {
+        add(data.literals.strings, 'LITERAL', 'lit');
+        add(data.literals.chars, 'LITERAL', 'lit');
+      }
+      add(data.unrecognized, 'UNRECOGNIZED', 'red');
+      return stream.sort((a, b) => a.line - b.line);
+    }
+
+    function createTokenStream(tokens) {
+      let chips = tokens.map(t => `
+    <span class="token-chip" style="border-left: 3px solid var(--${t.color || getColor(t.category)})" title="Line ${t.line}">
+      ${escapeHtml(t.value)}
+    </span>
+  `).join('');
+      return `<div class="stream-wrap">${chips}</div>`;
+    }
+
+    function getColor(cat) {
+      return {
+        KEYWORD: 'kw',
+        IDENTIFIER: 'id',
+        OPERATOR: 'op',
+        PUNCTUATOR: 'pun',
+        CONSTANT: 'con',
+        LITERAL: 'lit',
+        UNRECOGNIZED: 'red'
+      }[cat] || 'muted';
+    }
+
+    function createSection(title, content, fullWidth = false, isWarning = false) {
+      const card = document.createElement('div');
+      card.className = 'section-card';
+      card.setAttribute('data-section-title', title);
+      if (fullWidth) card.style.gridColumn = '1 / -1';
+      card.innerHTML = `
+    <div class="section-header">
+      <h2 class="section-title ${isWarning ? 'warning' : ''}">${title}</h2>
+      <a href="#" class="refresh-link" onclick="handleSingleSectionRefresh('${title.replace(/'/g, "\\'")}', event); return false;">↻ Refresh</a>
+    </div>
+    <div class="section-body">
+      ${content}
+    </div>
+  `;
+      return card;
+    }
+
+    function createTable(dict, label, colorVar) {
+      let rows = '';
+      for (const [name, count] of Object.entries(dict.counts)) {
+        const linesArr = Array.isArray(dict.tokens?.[name]) ? dict.tokens[name] : [];
+        const lines = linesArr.length ? linesArr.join(', ') : '—';
+        rows += `
+      <tr>
+        <td style="color:var(--${colorVar})">${escapeHtml(name)}</td>
+        <td>${count}</td>
+        <td style="color:var(--muted); font-size: .7rem;">${lines}</td>
+      </tr>
+    `;
+      }
+      return `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>${label}</th><th>Qty</th><th>Lines</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+    }
+
+    function createCategoryTable(data) {
+      const sumConst = data.constants ? (sum(data.constants.integers?.counts) + sum(data.constants.floats?.counts)) : 0;
+      const sumLit = data.literals ? (sum(data.literals.strings?.counts) + sum(data.literals.chars?.counts)) : 0;
+      const sumUnrecognized = sum(data.unrecognized?.counts);
+
+      const cats = [
+        { name: 'Keywords', val: sum(data.keywords?.counts), col: 'kw' },
+        { name: 'Identifiers', val: sum(data.identifiers?.counts), col: 'id' },
+        { name: 'Operators', val: sum(data.operators?.counts), col: 'op' },
+        { name: 'Separators', val: sum(data.punctuators?.counts), col: 'pun' },
+        { name: 'Constants', val: sumConst, col: 'con' },
+        { name: 'Literals', val: sumLit, col: 'lit' }
+      ];
+
+      if (sumUnrecognized > 0) {
+        cats.push({ name: '⚠ Unrecognized', val: sumUnrecognized, col: 'red' });
+      }
+
+      let rows = cats.map(c => `
+    <tr>
+      <td><span class="pill" style="background:var(--${c.col}); color:#000">${c.name}</span></td>
+      <td><strong>${c.val}</strong></td>
+      <td>${data.total_tokens > 0 ? ((c.val / data.total_tokens) * 100).toFixed(1) : 0}%</td>
+    </tr>
+  `).join('');
+
+      return `<div class="table-wrap"><table><thead><tr><th>Category</th><th>Count</th><th>%</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    }
+
+    function createSnapshot(data) {
+      const tokens = getAllTokens(data);
+      const totalTokens = data.total_tokens || tokens.length || 0;
+      const totalLines = data.total_lines || 0;
+      const codeLines = data.lines_with_code || 0;
+      const emptyLines = data.empty_lines || 0;
+
+      const uniqueTypes = estimateUniqueTypes(data);
+      const avgTokensPerLine = totalLines > 0 ? (totalTokens / totalLines) : 0;
+
+      const { most, least } = mostLeastFrequent(data);
+      const busiest = busiestLine(tokens, totalLines);
+
+      return `
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-big">${totalTokens}</div>
+        <div class="metric-label">Total Tokens</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-big">${uniqueTypes}</div>
+        <div class="metric-label">Unique Types</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-big">${codeLines}</div>
+        <div class="metric-label">Code Lines</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-big">${totalLines}</div>
+        <div class="metric-label">Total Lines</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-big">${emptyLines}</div>
+        <div class="metric-label">Empty Lines</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-big">${avgTokensPerLine.toFixed(1)}</div>
+        <div class="metric-label">Avg Tokens/Line</div>
+      </div>
+    </div>
+    <div style="height:16px"></div>
+    <div class="mono" style="display:grid; gap:12px;">
+      <div style="background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:16px;">
+        <div style="color:var(--muted); font-size:.75rem; letter-spacing:.08em; text-transform:uppercase;">Most Frequent Token</div>
+        <div style="margin-top:8px; font-size:1.05rem;">
+          <span style="font-weight:900;">${escapeHtml(most.name || '—')}</span>
+          <span style="color:var(--muted);"> · ${most.count || 0} occurrence(s) (${most.percent || '0.00'}%)</span>
+        </div>
+      </div>
+      <div style="background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:16px;">
+        <div style="color:var(--muted); font-size:.75rem; letter-spacing:.08em; text-transform:uppercase;">Least Frequent Token</div>
+        <div style="margin-top:8px; font-size:1.05rem;">
+          <span style="font-weight:900;">${escapeHtml(least.name || '—')}</span>
+          <span style="color:var(--muted);"> · ${least.count || 0} occurrence(s) (${least.percent || '0.00'}%)</span>
+        </div>
+      </div>
+      <div style="background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:16px;">
+        <div style="color:var(--muted); font-size:.75rem; letter-spacing:.08em; text-transform:uppercase;">Busiest Line</div>
+        <div style="margin-top:8px; font-size:1.05rem;">
+          <span style="font-weight:900;">Line ${busiest.line || 0}</span>
+          <span style="color:var(--muted);"> · ${busiest.count || 0} tokens</span>
+        </div>
+      </div>
+    </div>
+  `;
+    }
+
+    function createCategoryBars(data) {
+      const total = data.total_tokens || 0;
+      const sumConst = data.constants ? (sum(data.constants.integers?.counts) + sum(data.constants.floats?.counts)) : 0;
+      const sumLit = data.literals ? (sum(data.literals.strings?.counts) + sum(data.literals.chars?.counts)) : 0;
+      const sumUnrecognized = sum(data.unrecognized?.counts);
+
+      const rows = [
+        { key: 'SEPARATOR', label: 'SEPARATOR', val: sum(data.punctuators?.counts), col: 'pun' },
+        { key: 'IDENTIFIER', label: 'IDENTIFIER', val: sum(data.identifiers?.counts), col: 'id' },
+        { key: 'OPERATOR', label: 'OPERATOR', val: sum(data.operators?.counts), col: 'op' },
+        { key: 'KEYWORD', label: 'KEYWORD', val: sum(data.keywords?.counts), col: 'kw' },
+        { key: 'LITERAL', label: 'LITERAL', val: sumLit + sumConst, col: 'lit' }
+      ];
+
+      if (sumUnrecognized > 0) rows.push({ key: 'UNRECOGNIZED', label: 'UNRECOGNIZED', val: sumUnrecognized, col: 'red' });
+
+      const safeTotal = total > 0 ? total : rows.reduce((a, r) => a + r.val, 0) || 1;
+
+      return `
+    <div class="bar-table">
+      ${rows.map(r => {
+        const perc = (r.val / safeTotal) * 100;
+        return `
+          <div class="bar-row">
+            <div class="bar-name"><span class="bar-badge" style="background:var(--${r.col}); color:#080b14;">${r.label}</span></div>
+            <div class="bar-total">${r.val}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${Math.min(100, perc).toFixed(2)}%; background:var(--${r.col});"></div>
+            </div>
+            <div class="bar-perc">${perc.toFixed(2)}%</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+    }
+
+    function createLineDistribution(data) {
+      const tokens = getAllTokens(data);
+      const counts = perLineCounts(tokens);
+      const lines = Object.keys(counts).map(n => parseInt(n, 10)).sort((a, b) => a - b);
+      if (lines.length === 0) return `<div class="mono" style="color:var(--muted);">No line distribution available.</div>`;
+
+      const max = Math.max(...Object.values(counts));
+      const shown = lines.slice(0, 30);
+      return `
+    <div class="line-dist mono">
+      <div class="line-row" style="color:var(--muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.08em;">
+        <div>Line #</div><div>Tokens</div><div>Distribution</div><div></div>
+      </div>
+      ${shown.map(ln => {
+        const v = counts[ln] || 0;
+        const w = max > 0 ? (v / max) * 100 : 0;
+        return `
+          <div class="line-row">
+            <div>Line ${ln}</div>
+            <div style="font-weight:900; color:#fff;">${v}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${w.toFixed(2)}%; background: linear-gradient(90deg, var(--green), var(--teal));"></div></div>
+            <div style="text-align:right; color:var(--muted);">${v}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+    }
+
+    function getAllTokens(data) {
+      if (Array.isArray(data.allTokens) && data.allTokens.length) return data.allTokens;
+      return generateFallbackStream(data);
+    }
+
+    function perLineCounts(tokens) {
+      const out = {};
+      (tokens || []).forEach(t => {
+        const ln = parseInt(t.line, 10);
+        if (!Number.isFinite(ln)) return;
+        out[ln] = (out[ln] || 0) + 1;
+      });
+      return out;
+    }
+
+    function busiestLine(tokens, fallbackTotalLines = 0) {
+      const counts = perLineCounts(tokens);
+      let bestLine = 1;
+      let bestCount = 0;
+      for (const [k, v] of Object.entries(counts)) {
+        const ln = parseInt(k, 10);
+        if (v > bestCount) {
+          bestCount = v;
+          bestLine = ln;
+        }
+      }
+      if (bestCount === 0 && fallbackTotalLines > 0) return { line: 1, count: 0 };
+      return { line: bestLine, count: bestCount };
+    }
+
+    function estimateUniqueTypes(data) {
+      const parts = [];
+      const pushCounts = (dict) => dict?.counts ? Object.keys(dict.counts).length : 0;
+      parts.push(pushCounts(data.keywords));
+      parts.push(pushCounts(data.identifiers));
+      parts.push(pushCounts(data.operators));
+      parts.push(pushCounts(data.punctuators));
+      parts.push(data.constants ? (pushCounts(data.constants.integers) + pushCounts(data.constants.floats)) : 0);
+      parts.push(data.literals ? (pushCounts(data.literals.strings) + pushCounts(data.literals.chars)) : 0);
+      parts.push(pushCounts(data.unrecognized));
+      return parts.reduce((a, b) => a + b, 0);
+    }
+
+    function mostLeastFrequent(data) {
+      const total = data.total_tokens || 0;
+      const items = [];
+      const add = (dict, prefix) => {
+        if (!dict?.counts) return;
+        for (const [name, count] of Object.entries(dict.counts)) {
+          items.push({ name: prefix ? `${prefix}${name}` : name, count });
+        }
+      };
+
+      add(data.keywords, '');
+      add(data.identifiers, '');
+      add(data.operators, '');
+      add(data.punctuators, '');
+      if (data.constants) { add(data.constants.integers, ''); add(data.constants.floats, ''); }
+      if (data.literals) { add(data.literals.strings, ''); add(data.literals.chars, ''); }
+      add(data.unrecognized, '');
+
+      if (items.length === 0) return { most: {}, least: {} };
+
+      items.sort((a, b) => b.count - a.count);
+      const most = items[0];
+
+      items.sort((a, b) => a.count - b.count);
+      const least = items[0];
+
+      const pct = (c) => total > 0 ? ((c / total) * 100).toFixed(2) : '0.00';
+      return {
+        most: { name: most.name, count: most.count, percent: pct(most.count) },
+        least: { name: least.name, count: least.count, percent: pct(least.count) }
+      };
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function sum(obj) {
+      if (!obj) return 0;
+      return Object.values(obj).reduce((a, b) => a + b, 0);
+    }
+/*
+    function createParserErrorsCard(ast) {
+      const errors = ast?.errors || [];
+      const warnings = ast?.warnings || [];
+      if (errors.length === 0 && warnings.length === 0) {
+        return `
+      <div style="background: rgba(166, 227, 161, 0.1); border: 1px solid rgba(166, 227, 161, 0.3); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 16px;">
+        <span style="font-size: 1.8rem; color: var(--green);">✓</span>
+        <div>
+          <h4 style="color: #fff; font-weight: 700; font-size: 1rem; margin-bottom: 4px;">Syntax Analysis Successful</h4>
+          <p style="color: var(--muted); font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;">The W++ parser successfully built the AST with 0 errors and 0 warnings.</p>
+        </div>
+      </div>
+    `;
+      }
+
+      // Fetch source lines to show code preview
+      const sourceCode = localStorage.getItem('sourceCode') || '';
+      const sourceLines = sourceCode.split('\n');
+
+      // Helper function to choose the colored pill style for each error code
+      const getPillStyle = (code) => {
+        switch (code) {
+          case 'INVALID_MAIN':
+            return { bg: 'rgba(243, 139, 168, 0.15)', text: 'var(--red)', border: '1px solid var(--red)' };
+          case 'MISSING_SEMICOLON':
+            return { bg: 'rgba(249, 226, 175, 0.15)', text: 'var(--yellow)', border: '1px solid var(--yellow)' };
+          case 'INVALID_VARIABLE_NAME':
+            return { bg: 'rgba(203, 166, 247, 0.15)', text: 'var(--mauve)', border: '1px solid var(--mauve)' };
+          case 'INVALID_DECLARATION':
+            return { bg: 'rgba(250, 179, 135, 0.15)', text: 'var(--peach)', border: '1px solid var(--peach)' };
+          case 'INVALID_IF':
+          case 'INVALID_WHILE':
+          case 'INVALID_FOR':
+            return { bg: 'rgba(137, 220, 235, 0.15)', text: 'var(--sky)', border: '1px solid var(--sky)' };
+          case 'UNMATCHED_BRACE':
+            return { bg: 'rgba(243, 139, 168, 0.15)', text: 'var(--red)', border: '1px solid var(--red)' };
+          default:
+            return { bg: 'rgba(255, 255, 255, 0.05)', text: 'var(--text)', border: '1px solid rgba(255, 255, 255, 0.1)' };
+        }
+      };
+
+      let html = '';
+      if (errors.length > 0) {
+        html += `
+      <div style="background: rgba(243, 139, 168, 0.05); border: 1px solid rgba(243, 139, 168, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+        <h4 style="color: var(--red); font-weight: 700; font-size: 1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+          <span>❌</span> Syntax Errors Detected (${errors.length})
+        </h4>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 70px;">Row</th>
+                <th style="width: 80px;">Line</th>
+                <th style="width: 60px;">Col</th>
+                <th style="width: 200px;">Error Code</th>
+                <th>Description</th>
+                <th>Source Code</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${errors.map((err, index) => {
+                const pill = getPillStyle(err.code);
+                const lineNum = err.line;
+                const lineContent = (lineNum !== 'EOF' && lineNum > 0 && lineNum <= sourceLines.length) 
+                  ? sourceLines[lineNum - 1].trim() 
+                  : '';
+                return `
+                <tr>
+                  <td style="color: var(--muted);">${index + 1}</td>
+                  <td>
+                    <span style="background: #111828; color: #fff; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-family: monospace; font-size: 0.75rem; border: 1px solid var(--border);">
+                      L${err.line}
+                    </span>
+                  </td>
+                  <td>${err.column || 0}</td>
+                  <td>
+                    <span class="pill" style="background: ${pill.bg}; color: ${pill.text}; border: ${pill.border}; display: inline-block;">
+                      ${err.code || 'SYNTAX_ERROR'}
+                    </span>
+                  </td>
+                  <td style="color: var(--text);">${escapeHtml(err.message)}</td>
+                  <td>
+                    <code style="color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; background: rgba(243, 139, 168, 0.05); padding: 2px 6px; border-radius: 4px; border: 1px dashed rgba(243, 139, 168, 0.15);">
+                      ${escapeHtml(lineContent) || 'EOF'}
+                    </code>
+                  </td>
+                </tr>
+              `}).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+      }
+
+      if (warnings.length > 0) {
+        html += `
+      <div style="background: rgba(249, 226, 175, 0.05); border: 1px solid rgba(249, 226, 175, 0.2); border-radius: 12px; padding: 20px;">
+        <h4 style="color: var(--yellow); font-weight: 700; font-size: 1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+          <span>⚠️</span> Syntax Warnings (${warnings.length})
+        </h4>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 70px;">Row</th>
+                <th style="width: 80px;">Line</th>
+                <th>Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${warnings.map((warn, index) => `
+                <tr>
+                  <td style="color: var(--muted);">${index + 1}</td>
+                  <td>
+                    <span style="background: #111828; color: #fff; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-family: monospace; font-size: 0.75rem; border: 1px solid var(--border);">
+                      L${warn.line || '—'}
+                    </span>
+                  </td>
+                  <td style="color: var(--text);">${escapeHtml(warn.message)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+      }
+
+      return html;
+    }
+*/
+
+    function createParserErrorsCard(ast) {
+  const errors = ast?.errors || [];
+  const warnings = ast?.warnings || [];
+  if (errors.length === 0 && warnings.length === 0) {
+    return `
+    <div style="background: rgba(166, 227, 161, 0.1); border: 1px solid rgba(166, 227, 161, 0.3); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 16px;">
+      <span style="font-size: 1.8rem; color: var(--green);">✓</span>
+      <div>
+        <h4 style="color: #fff; font-weight: 700; font-size: 1rem; margin-bottom: 4px;">Syntax Analysis Successful</h4>
+        <p style="color: var(--muted); font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;">The W++ parser successfully built the AST with 0 errors and 0 warnings.</p>
+      </div>
+    </div>
+  `;
+  }
+
+  // Fetch source lines to show code preview
+  const sourceCode = localStorage.getItem('sourceCode') || '';
+  const sourceLines = sourceCode.split('\n');
+  const totalLines = sourceLines.length;   // ← needed for EOF handling
+
+  // Helper — pick pill color per error code
+  const getPillStyle = (code) => {
+    switch (code) {
+      case 'INVALID_MAIN':
+        return { bg: 'rgba(243, 139, 168, 0.15)', text: 'var(--red)', border: '1px solid var(--red)' };
+      case 'MISSING_SEMICOLON':
+        return { bg: 'rgba(249, 226, 175, 0.15)', text: 'var(--yellow)', border: '1px solid var(--yellow)' };
+      case 'INVALID_VARIABLE_NAME':
+        return { bg: 'rgba(203, 166, 247, 0.15)', text: 'var(--mauve)', border: '1px solid var(--mauve)' };
+      case 'INVALID_DECLARATION':
+        return { bg: 'rgba(250, 179, 135, 0.15)', text: 'var(--peach)', border: '1px solid var(--peach)' };
+      case 'TYPE_MISMATCH':
+        return { bg: 'rgba(250, 179, 135, 0.15)', text: 'var(--peach)', border: '1px solid var(--peach)' };
+      case 'INVALID_IF':
+      case 'INVALID_WHILE':
+      case 'INVALID_FOR':
+        return { bg: 'rgba(137, 220, 235, 0.15)', text: 'var(--sky)', border: '1px solid var(--sky)' };
+      case 'UNMATCHED_BRACE':
+        return { bg: 'rgba(243, 139, 168, 0.15)', text: 'var(--red)', border: '1px solid var(--red)' };
+      default:
+        return { bg: 'rgba(255, 255, 255, 0.05)', text: 'var(--text)', border: '1px solid rgba(255, 255, 255, 0.1)' };
+    }
+  };
+
+  // Helper — resolve line display text and source preview for any error
+  const resolveLineInfo = (err) => {
+    const lineNum = err.line;
+
+    if (lineNum === 'EOF') {
+      // Point to the last line of the file
+      const lastLineContent = sourceLines[totalLines - 1]?.trim() || '';
+      return {
+        display: 'EOF',                      // badge shows "EOF"
+        content: lastLineContent,            // preview shows last line's code
+        isEof:   true
+      };
+    }
+
+    if (typeof lineNum === 'number' && lineNum > 0 && lineNum <= totalLines) {
+      return {
+        display: `L${lineNum}`,
+        content: sourceLines[lineNum - 1].trim(),
+        isEof:   false
+      };
+    }
+
+    // Fallback — unknown line
+    return {
+      display: `L${lineNum}`,
+      content: '',
+      isEof:   false
+    };
+  };
+
+  let html = '';
+
+  if (errors.length > 0) {
+    html += `
+    <div style="background: rgba(243, 139, 168, 0.05); border: 1px solid rgba(243, 139, 168, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+      <h4 style="color: var(--red); font-weight: 700; font-size: 1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+        <span>❌</span> Syntax Errors Detected (${errors.length})
+      </h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 70px;">Row</th>
+              <th style="width: 80px;">Line</th>
+              <th style="width: 60px;">Col</th>
+              <th style="width: 200px;">Error Code</th>
+              <th>Description</th>
+              <th>Source Code</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${errors.map((err, index) => {
+              const pill = getPillStyle(err.code);
+              const { display, content, isEof } = resolveLineInfo(err);
+
+              // EOF badge gets a red tint instead of the default dark style
+              const badgeStyle = isEof
+                ? `background: rgba(243,139,168,0.15); color: var(--red); padding: 4px 10px;
+                   border-radius: 6px; font-weight: bold; font-family: monospace;
+                   font-size: 0.75rem; border: 1px solid var(--red);`
+                : `background: #111828; color: #fff; padding: 4px 10px;
+                   border-radius: 6px; font-weight: bold; font-family: monospace;
+                   font-size: 0.75rem; border: 1px solid var(--border);`;
+
+              return `
+              <tr>
+                <td style="color: var(--muted);">${index + 1}</td>
+                <td>
+                  <span style="${badgeStyle}">
+                    ${display}
+                  </span>
+                </td>
+                <td>${err.column || 0}</td>
+                <td>
+                  <span class="pill" style="background: ${pill.bg}; color: ${pill.text};
+                        border: ${pill.border}; display: inline-block;">
+                    ${err.code || 'SYNTAX_ERROR'}
+                  </span>
+                </td>
+                <td style="color: var(--text);">${escapeHtml(err.message)}</td>
+                <td>
+                  <code style="color: var(--red); font-family: 'JetBrains Mono', monospace;
+                        font-size: 0.75rem; background: rgba(243, 139, 168, 0.05);
+                        padding: 2px 6px; border-radius: 4px;
+                        border: 1px dashed rgba(243, 139, 168, 0.15);">
+                    ${escapeHtml(content) || 'EOF'}
+                  </code>
+                </td>
+              </tr>
+            `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  }
+
+  if (warnings.length > 0) {
+    html += `
+    <div style="background: rgba(249, 226, 175, 0.05); border: 1px solid rgba(249, 226, 175, 0.2); border-radius: 12px; padding: 20px;">
+      <h4 style="color: var(--yellow); font-weight: 700; font-size: 1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+        <span>⚠️</span> Syntax Warnings (${warnings.length})
+      </h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 70px;">Row</th>
+              <th style="width: 80px;">Line</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${warnings.map((warn, index) => `
+              <tr>
+                <td style="color: var(--muted);">${index + 1}</td>
+                <td>
+                  <span style="background: #111828; color: #fff; padding: 4px 10px;
+                        border-radius: 6px; font-weight: bold; font-family: monospace;
+                        font-size: 0.75rem; border: 1px solid var(--border);">
+                    L${warn.line || '—'}
+                  </span>
+                </td>
+                <td style="color: var(--text);">${escapeHtml(warn.message)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  }
+
+  return html;
+}
+
+    function createSymbolTableCard(symbolTable) {
+      if (!symbolTable || symbolTable.length === 0) {
+        return `
+      <div class="mono" style="color:var(--muted); background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:16px;">
+        Symbol table is empty (no variables or identifiers declared/used).
+      </div>
+    `;
+      }
+
+      let rows = symbolTable.map(entry => {
+        let dimLabel = 'Scalar';
+        if (entry.dimension === 0) dimLabel = 'Scalar';
+        else if (entry.dimension === 1) dimLabel = '1-D Array';
+        else if (typeof entry.dimension === 'number') dimLabel = `${entry.dimension}-D Array`;
+        else if (entry.dimension && entry.dimension !== '-') dimLabel = entry.dimension;
+        else dimLabel = 'Scalar';
+
+        const declLine = entry.line_declared !== null && entry.line_declared !== undefined ? `Line ${entry.line_declared}` : '<span style="color: var(--red);">Undeclared</span>';
+        const linesUsed = Array.isArray(entry.lines_used) && entry.lines_used.length > 0 ? entry.lines_used.join(', ') : '—';
+        const typeColor = entry.type === 'UNDECLARED' ? 'var(--red)' : 'var(--teal)';
+        const sizeVal = entry.size !== undefined ? `${entry.size} B` : '—';
+
+        return `
+      <tr>
+        <td style="color: var(--accent); font-weight: bold;">${escapeHtml(entry.name)}</td>
+        <td><span class="pill" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: ${typeColor};">${escapeHtml(entry.type)}</span></td>
+        <td>${sizeVal}</td>
+        <td>${dimLabel}</td>
+        <td>${declLine}</td>
+        <td style="color: var(--muted);">${linesUsed}</td>
+      </tr>
+    `;
+      }).join('');
+
+      return `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Identifier</th>
+            <th>Type</th>
+            <th>Size</th>
+            <th>Dimension</th>
+            <th>Declared</th>
+            <th>Lines Used</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    </div>
+  `;
+    }
+
+    function createAstCard(ast) {
+      const highlighted = syntaxHighlightJSON(ast);
+      const containerId = 'ast-code-block-' + Math.floor(Math.random() * 1000000);
+
+      return `
+    <div style="position: relative;">
+      <button class="ast-copy-btn" onclick="copyAstToClipboard('${containerId}')">Copy AST JSON</button>
+      <div id="${containerId}" class="ast-container"><pre><code>${highlighted}</code></pre></div>
+    </div>
+  `;
+    }
+
+    function syntaxHighlightJSON(json) {
+      if (typeof json !== 'string') {
+        json = JSON.stringify(json, undefined, 2);
+      }
+      json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, function (match) {
+        let cls = 'number';
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+            cls = 'key';
+          } else {
+            cls = 'string';
+          }
+        } else if (/true|false/.test(match)) {
+          cls = 'boolean';
+        } else if (/null/.test(match)) {
+          cls = 'null';
+        }
+        return '<span class="json-' + cls + '">' + match + '</span>';
+      });
+    }
+
+    function copyAstToClipboard(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const text = container.textContent || container.innerText;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = container.previousElementSibling;
+        if (btn) {
+          const originalText = btn.textContent;
+          btn.textContent = 'Copied!';
+          btn.style.background = 'var(--green)';
+          btn.style.color = '#080b14';
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = '';
+            btn.style.color = '';
+          }, 2000);
+        }
+      }).catch(err => {
+        alert('Failed to copy AST: ' + err);
+      });
+    }
+  </script>
+
+</body>
+
+</html>

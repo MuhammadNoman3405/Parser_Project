@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>W++ Token Analyzer | CS-310 Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #080b14;
+  --s1:      #0d1120;
+  --s2:      #111828;
+  --card:    #151d2e;
+  --border:  #1e2a42;
+  --border2: #263450;
+  --text:    #cdd6f4;
+  --muted:   #6c7a96;
+  --accent:  #89b4fa;
+  --green:   #a6e3a1;
+  --yellow:  #f9e2af;
+  --red:     #f38ba8;
+  --mauve:   #cba6f7;
+  --peach:   #fab387;
+  --sky:     #89dceb;
+  --teal:    #94e2d5;
+  --overlay: rgba(137,180,250,0.06);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ═══════════ ANIMATED BACKGROUND ═══════════ */
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(137,180,250,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(137,180,250,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+  animation: gridPulse 8s ease-in-out infinite;
+}
+
+@keyframes gridPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Floating orbs */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 1;
+  animation: float 20s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 400px;
+  height: 400px;
+  background: var(--accent);
+  top: -100px;
+  left: -100px;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 350px;
+  height: 350px;
+  background: var(--mauve);
+  bottom: -100px;
+  right: -100px;
+  animation-delay: -7s;
+}
+
+.orb-3 {
+  width: 300px;
+  height: 300px;
+  background: var(--teal);
+  top: 50%;
+  right: 10%;
+  animation-delay: -14s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -50px) scale(1.1); }
+  50% { transform: translate(-20px, 20px) scale(0.9); }
+  75% { transform: translate(40px, 30px) scale(1.05); }
+}
+
+/* ═══════════ CONTAINER ═══════════ */
+.container {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+/* ═══════════ LOGO SECTION ═══════════ */
+.logo-section {
+  text-align: center;
+  margin-bottom: 50px;
+  animation: fadeInDown 1s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.logo-icon {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, #89b4fa, #cba6f7);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+  box-shadow: 
+    0 0 40px rgba(137,180,250,0.4),
+    0 20px 60px rgba(137,180,250,0.2);
+  animation: iconPulse 3s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    box-shadow: 
+      0 0 40px rgba(137,180,250,0.4),
+      0 20px 60px rgba(137,180,250,0.2);
+  }
+  50% { 
+    transform: scale(1.05) rotate(5deg);
+    box-shadow: 
+      0 0 60px rgba(137,180,250,0.6),
+      0 20px 80px rgba(137,180,250,0.3);
+  }
+}
+
+.project-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #89b4fa, #cba6f7, #89dceb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 5s ease infinite;
+  background-size: 200% 200%;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.project-subtitle {
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.course-info {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 8px 20px;
+  border-radius: 25px;
+  background: rgba(137,180,250,0.1);
+  border: 1px solid rgba(137,180,250,0.25);
+  font-size: clamp(0.75rem, 1.5vw, 0.85rem);
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+
+/* ═══════════ TEAM SECTION ═══════════ */
+.team-section {
+  width: 100%;
+  max-width: 900px;
+  margin-bottom: 50px;
+  animation: fadeInUp 1s ease 0.2s backwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.section-title {
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.section-title::before,
+.section-title::after {
+  content: '';
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 0 20px;
+}
+
+.member-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.member-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transition: left 0.5s ease;
+}
+
+.member-card:hover::before {
+  left: 100%;
+}
+
+.member-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-8px);
+  box-shadow: 
+    0 20px 40px rgba(0,0,0,0.3),
+    0 0 30px rgba(137,180,250,0.2);
+}
+
+.member-avatar {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  background: linear-gradient(135deg, #89b4fa, #cba6f7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  box-shadow: 0 10px 30px rgba(137,180,250,0.3);
+  transition: all 0.3s ease;
+}
+
+.member-card:hover .member-avatar {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 15px 40px rgba(137,180,250,0.5);
+}
+
+.member-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+
+.member-reg {
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  background: rgba(137,180,250,0.1);
+  padding: 6px 14px;
+  border-radius: 20px;
+  display: inline-block;
+  border: 1px solid rgba(137,180,250,0.2);
+}
+
+/* ═══════════ CTA SECTION ═══════════ */
+.cta-section {
+  text-align: center;
+  animation: fadeInUp 1s ease 0.4s backwards;
+}
+
+.start-btn {
+  position: relative;
+  padding: 18px 60px;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-weight: 700;
+  color: #080b14;
+  background: linear-gradient(135deg, #89b4fa, #cba6f7);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  letter-spacing: 0.05em;
+  box-shadow: 
+    0 10px 40px rgba(137,180,250,0.4),
+    0 0 60px rgba(137,180,250,0.2);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.start-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.start-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.start-btn:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 
+    0 20px 60px rgba(137,180,250,0.6),
+    0 0 80px rgba(137,180,250,0.3);
+}
+
+.start-btn:active {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.start-btn span {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-icon {
+  font-size: 1.3em;
+  transition: transform 0.3s ease;
+}
+
+.start-btn:hover .btn-icon {
+  transform: translateX(5px);
+}
+
+.cta-subtitle {
+  margin-top: 20px;
+  font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ═══════════ FOOTER ═══════════ */
+.footer {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  z-index: 10;
+}
+
+.footer-divider {
+  width: 60px;
+  height: 1px;
+  background: var(--border2);
+  margin: 12px auto;
+}
+
+/* ═══════════ RESPONSIVE ═══════════ */
+@media (max-width: 768px) {
+  .container {
+    padding: 30px 15px;
+  }
+
+  .logo-icon {
+    width: 80px;
+    height: 80px;
+    font-size: 42px;
+  }
+
+  .logo-section {
+    margin-bottom: 40px;
+  }
+
+  .team-section {
+    margin-bottom: 40px;
+  }
+
+  .team-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 0 10px;
+  }
+
+  .member-card {
+    padding: 24px 20px;
+  }
+
+  .section-title::before,
+  .section-title::after {
+    width: 20px;
+  }
+
+  .start-btn {
+    padding: 16px 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-icon {
+    width: 70px;
+    height: 70px;
+    font-size: 36px;
+  }
+
+  .course-info {
+    padding: 6px 16px;
+  }
+
+  .member-avatar {
+    width: 70px;
+    height: 70px;
+    font-size: 32px;
+  }
+
+  .start-btn {
+    padding: 14px 40px;
+  }
+}
+
+/* ═══════════ ACCESSIBILITY ═══════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus styles for accessibility */
+.start-btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+</style>
+</head>
+<body>
+
+<!-- Animated Background -->
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- Main Container -->
+<div class="container">
+  
+  <!-- Logo Section -->
+  <div class="logo-section">
+    <div class="logo-icon">⚙</div>
+    <h1 class="project-title">W++ Token Compiler</h1>
+    <p class="project-subtitle">Lexical Analysis & Statistical Reporting</p>
+    <div class="course-info">CS-310 · Compiler Construction · Spring 2K26</div>
+  </div>
+
+  <!-- Team Section -->
+  <div class="team-section">
+    <div class="section-header">
+      <h2 class="section-title">Development Team</h2>
+    </div>
+    <div class="team-grid">
+      <div class="member-card">
+        <div class="member-avatar">👨‍💻</div>
+        <h3 class="member-name">Muhammad Rayban</h3>
+        <span class="member-reg">23-CS-46</span>
+      </div>
+      <div class="member-card">
+        <div class="member-avatar">👨‍💻</div>
+        <h3 class="member-name">Muhammad Noman</h3>
+        <span class="member-reg">23-CS-68</span>
+      </div>
+      <div class="member-card">
+        <div class="member-avatar">👨‍💻</div>
+        <h3 class="member-name">Muhammad Junaid</h3>
+        <span class="member-reg">23-CS-66</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA Section -->
+  <div class="cta-section">
+    <a href="Analyze.html" class="start-btn">
+      <span>
+        Launch Analyzer
+        <span class="btn-icon">→</span>
+      </span>
+    </a>
+    <p class="cta-subtitle">Begin tokenizing and analyzing W++ source code</p>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-divider"></div>
+  <p>© 2026 CS-310 Project · UET</p>
+</div>
+
+<!-- Smooth scroll polyfill for older browsers -->
+<script>
+// Add smooth navigation experience
+document.addEventListener('DOMContentLoaded', () => {
+  const startBtn = document.querySelector('.start-btn');
+  
+  // Add ripple effect on click
+  startBtn.addEventListener('click', function(e) {
+    const ripple = document.createElement('div');
+    const rect = this.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+    
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    ripple.style.position = 'absolute';
+    ripple.style.borderRadius = '50%';
+    ripple.style.background = 'rgba(255,255,255,0.5)';
+    ripple.style.pointerEvents = 'none';
+    ripple.style.animation = 'ripple 0.6s ease-out';
+    
+    this.appendChild(ripple);
+    
+    setTimeout(() => ripple.remove(), 600);
+  });
+
+  // Parallax effect for orbs on mouse move
+  document.addEventListener('mousemove', (e) => {
+    const orbs = document.querySelectorAll('.orb');
+    const mouseX = e.clientX / window.innerWidth;
+    const mouseY = e.clientY / window.innerHeight;
+    
+    orbs.forEach((orb, index) => {
+      const speed = (index + 1) * 20;
+      const x = (mouseX - 0.5) * speed;
+      const y = (mouseY - 0.5) * speed;
+      orb.style.transform = `translate(${x}px, ${y}px)`;
+    });
+  });
+
+  // Add entrance animations on scroll
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, observerOptions);
+
+  document.querySelectorAll('.member-card').forEach(card => {
+    observer.observe(card);
+  });
+});
+
+// Add ripple keyframes
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes ripple {
+    from {
+      transform: scale(0);
+      opacity: 1;
+    }
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+`;
+document.head.appendChild(style);
+</script>
+
+</body>
+</html>
